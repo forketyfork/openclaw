@@ -2,6 +2,7 @@
   "id": "phone-control",
   "name": "Phone Control",
   "description": "Arm/disarm high-risk phone node commands (camera/screen/writes) with an optional auto-expiry.",
+  "cliCommands": [],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

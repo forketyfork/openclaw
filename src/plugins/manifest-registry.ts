@@ -39,6 +39,7 @@ export type PluginManifestRecord = {
   description?: string;
   version?: string;
   kind?: PluginKind;
+  cliCommands?: string[];
   channels: string[];
   providers: string[];
   skills: string[];
@@ -130,6 +131,7 @@ function buildRecord(params: {
       normalizeManifestLabel(params.manifest.description) ?? params.candidate.packageDescription,
     version: normalizeManifestLabel(params.manifest.version) ?? params.candidate.packageVersion,
     kind: params.manifest.kind,
+    cliCommands: params.manifest.cliCommands,
     channels: params.manifest.channels ?? [],
     providers: params.manifest.providers ?? [],
     skills: params.manifest.skills ?? [],

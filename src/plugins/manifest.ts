@@ -11,6 +11,7 @@ export type PluginManifest = {
   id: string;
   configSchema: Record<string, unknown>;
   kind?: PluginKind;
+  cliCommands?: string[];
   channels?: string[];
   providers?: string[];
   skills?: string[];
@@ -69,6 +70,9 @@ export function loadPluginManifest(rootDir: string): PluginManifestLoadResult {
   }
 
   const kind = typeof raw.kind === "string" ? (raw.kind as PluginKind) : undefined;
+  const cliCommands = Object.prototype.hasOwnProperty.call(raw, "cliCommands")
+    ? normalizeStringList(raw.cliCommands)
+    : undefined;
   const name = typeof raw.name === "string" ? raw.name.trim() : undefined;
   const description = typeof raw.description === "string" ? raw.description.trim() : undefined;
   const version = typeof raw.version === "string" ? raw.version.trim() : undefined;
@@ -87,6 +91,7 @@ export function loadPluginManifest(rootDir: string): PluginManifestLoadResult {
       id,
       configSchema,
       kind,
+      cliCommands,
       channels,
       providers,
       skills,
