@@ -101,9 +101,11 @@ const resolvePluginSdkConfigSchemaAlias = (): string | null => {
 function buildCacheKey(params: {
   workspaceDir?: string;
   plugins: NormalizedPluginsConfig;
+  mode: PluginLoadOptions["mode"];
 }): string {
   const workspaceKey = params.workspaceDir ? resolveUserPath(params.workspaceDir) : "";
-  return `${workspaceKey}::${JSON.stringify(params.plugins)}`;
+  const mode = params.mode ?? "full";
+  return `${workspaceKey}::${mode}::${JSON.stringify(params.plugins)}`;
 }
 
 function validatePluginConfig(params: {
@@ -202,6 +204,7 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
   const cacheKey = buildCacheKey({
     workspaceDir: options.workspaceDir,
     plugins: normalized,
+    mode: options.mode,
   });
   const cacheEnabled = options.cache !== false;
   if (cacheEnabled) {

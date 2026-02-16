@@ -135,6 +135,56 @@ describe("loadOpenClawPlugins", () => {
     expect(plugin?.error).toContain("legacy manifest import path exercised");
   });
 
+  it("uses separate cache entries for cli and full modes", () => {
+    process.env.OPENCLAW_BUNDLED_PLUGINS_DIR = "/nonexistent/bundled/plugins";
+    const dir = makeTempDir();
+    const file = path.join(dir, "cache-mode-separation.js");
+    fs.writeFileSync(file, `throw new Error("full mode import path exercised");`, "utf-8");
+    fs.writeFileSync(
+      path.join(dir, "openclaw.plugin.json"),
+      JSON.stringify(
+        {
+          id: "cache-mode-separation",
+          cliCommands: [],
+          configSchema: EMPTY_PLUGIN_SCHEMA,
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    const cliRegistry = loadOpenClawPlugins({
+      mode: "cli",
+      workspaceDir: dir,
+      config: {
+        plugins: {
+          load: { paths: [file] },
+          allow: ["cache-mode-separation"],
+        },
+      },
+    });
+
+    const cliPlugin = cliRegistry.plugins.find((entry) => entry.id === "cache-mode-separation");
+    expect(cliPlugin?.status).toBe("loaded");
+    expect(cliPlugin?.error).toBeUndefined();
+
+    const fullRegistry = loadOpenClawPlugins({
+      mode: "full",
+      workspaceDir: dir,
+      config: {
+        plugins: {
+          load: { paths: [file] },
+          allow: ["cache-mode-separation"],
+        },
+      },
+    });
+
+    const fullPlugin = fullRegistry.plugins.find((entry) => entry.id === "cache-mode-separation");
+    expect(fullPlugin?.status).toBe("error");
+    expect(fullPlugin?.error).toContain("full mode import path exercised");
+  });
+
   it("disables bundled plugins by default", () => {
     const bundledDir = makeTempDir();
     writePlugin({
