@@ -233,6 +233,16 @@ export class MemoryIndexManager extends MemoryManagerEmbeddingOps implements Mem
         return [];
       }
 
+      // In FTS-only mode the index is the only source of results, so we must
+      // ensure it is populated before querying.
+      if (this.syncing) {
+        await this.syncing.catch(() => {});
+      } else if (this.dirty || this.sessionsDirty) {
+        await this.sync({ reason: "search" }).catch((err) => {
+          log.warn(`memory sync failed (fts-only pre-search): ${String(err)}`);
+        });
+      }
+
       // Extract keywords for better FTS matching on conversational queries
       // e.g., "that thing we discussed about the API" → ["discussed", "API"]
       const keywords = extractKeywords(cleaned);
