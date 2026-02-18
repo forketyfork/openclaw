@@ -683,7 +683,7 @@ export abstract class MemoryManagerSyncOps {
         try {
           this.db
             .prepare(`DELETE FROM ${FTS_TABLE} WHERE path = ? AND source = ? AND model = ?`)
-            .run(stale.path, "memory", this.provider?.model ?? "fts-only");
+            .run(stale.path, "memory", this.provider?.model ?? FTS_ONLY_MODEL);
         } catch {}
       }
     }
