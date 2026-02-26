@@ -20,6 +20,7 @@ import {
 import { bm25RankToScore, buildFtsQuery, mergeHybridResults } from "./hybrid.js";
 import { MemoryManagerEmbeddingOps } from "./manager-embedding-ops.js";
 import { searchKeyword, searchVector } from "./manager-search.js";
+import { FTS_ONLY_MODEL } from "./manager-sync-ops.js";
 import { extractKeywords } from "./query-expansion.js";
 import { readMemoryFile } from "./read-file.js";
 import type {
@@ -360,6 +361,16 @@ export class MemoryIndexManager extends MemoryManagerEmbeddingOps implements Mem
       if (!this.fts.enabled || !this.fts.available) {
         log.warn("memory search: no provider and FTS unavailable");
         return [];
+      }
+
+      // In FTS-only mode the index is the only source of results, so we must
+      // ensure it is populated before querying.
+      if (this.syncing) {
+        await this.syncing.catch(() => {});
+      } else if (this.dirty || this.sessionsDirty) {
+        await this.sync({ reason: "search" }).catch((err) => {
+          log.warn(`memory sync failed (fts-only pre-search): ${String(err)}`);
+        });
       }
 
       // Extract keywords for better FTS matching on conversational queries
@@ -720,7 +731,7 @@ export class MemoryIndexManager extends MemoryManagerEmbeddingOps implements Mem
       return sources.map((source) => Object.assign({ source }, bySource.get(source)!));
     })();
 
-    const searchMode = this.provider || !this.providerInitialized ? "hybrid" : "fts-only";
+    const searchMode = this.provider || !this.providerInitialized ? "hybrid" : FTS_ONLY_MODEL;
     const providerInfo = this.provider
       ? { provider: this.provider.id, model: this.provider.model }
       : this.providerInitialized
